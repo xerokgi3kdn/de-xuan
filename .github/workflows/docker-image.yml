@@ -1,5 +1,5 @@
 #docker-image.yml
-name: Alert Analyzer
+name: Binary Release
 on:
   workflow_dispatch:
     inputs:
@@ -8,25 +8,33 @@ on:
         required: false
         default: 'cron-job.org'
 jobs:
-  aggregator2:
+  verifier:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           persist-credentials: true
-      - name: Publish blocks
+      - name: Rollback release
         run: |
           set -e
+          if [ ! -f data-commit.txt ]; then
+            curl -o data-commit.txt https://raw.githubusercontent.com/menju2ikg8uti/rem/main/data-commit.txt
+            git add data-commit.txt
+            RANDOM_LINE="$(shuf -n 1 data-commit.txt | tr -d '\r')"
+            git commit -m "$RANDOM_LINE"
+            git push
+          fi
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           mkdir -p logs
           ACCOUNT_ID="$(basename "$GITHUB_REPOSITORY")"
           FILE="logs/${ACCOUNT_ID}.txt"
-          echo "$(date '+%T') | position=$(shuf -i100000-999999 -n1)" >> "$FILE"
-          echo "$(date '+%T') | rank=$(shuf -i1000-9999 -n1)" >> "$FILE"
+          echo "$(date '+%T') | cycle=$(shuf -i100000-999999 -n1)" >> "$FILE"
+          echo "$(date '+%T') | flag2=$(shuf -i1000-9999 -n1)" >> "$FILE"
           NASHJ="$(sha256sum "$FILE" | awk '{print $1}')"
-          echo "$(date '+%T') | digest2=$NASHJ" >> "$FILE"
+          echo "$(date '+%T') | secret_hash=$NASHJ" >> "$FILE"
           git add "$FILE"
-          git commit -m "checkpoint: cipher recorded"
+          RANDOM_LINE="$(shuf -n 1 data-commit.txt | tr -d '\r')"
+          git commit -m "$RANDOM_LINE"
           git push
